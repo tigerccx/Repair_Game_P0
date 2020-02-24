@@ -17,15 +17,24 @@ public class Tester : MonoBehaviour
         //print(i);
 
         Test0 t0 = new Test0();
-        Type type = typeof(Test0);
-        string memberName = "I";
-        var a = type.GetProperty(memberName, BindingFlags.NonPublic | BindingFlags.Instance| BindingFlags.Public| BindingFlags.Static);
-        print(a);
+        object o0 = t0;
+        object o1 = t0;
+        print(o0 == o1);
+        print(o0.Equals(o1));
     }
 
     // Update is called once per frame
     void Update()
     {
         
+    }
+}
+
+class Test0
+{
+    private int I { get; set; }
+    public int GetI()
+    {
+        return I;
     }
 }
