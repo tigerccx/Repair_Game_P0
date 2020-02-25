@@ -39,12 +39,7 @@ public class PropertyAnimator : MonoBehaviour
     private List<PropertyUpdater<Vector2Int>> updatersVector2Int = new List<PropertyUpdater<Vector2Int>>();
     private List<PropertyUpdater<Vector3Int>> updatersVector3Int = new List<PropertyUpdater<Vector3Int>>();
 
-    //private List<UnityEvent> eventsStart = new List<UnityEvent>();
-    //private List<UnityEvent> eventsPause = new List<UnityEvent>();
-    //private List<UnityEvent> eventsResume = new List<UnityEvent>();
-    //private List<UnityEvent> eventsEnd = new List<UnityEvent>();
-
-    private Dictionary<Tuple<object, string>, UnityEvent> eventsDicStart = new Dictionary<Tuple<object, string>, UnityEvent>();
+    //private Dictionary<Tuple<object, string>, UnityEvent> eventsDicStart = new Dictionary<Tuple<object, string>, UnityEvent>();
     private Dictionary<Tuple<object, string>, UnityEvent> eventsDicPause = new Dictionary<Tuple<object, string>, UnityEvent>();
     private Dictionary<Tuple<object, string>, UnityEvent> eventsDicResume = new Dictionary<Tuple<object, string>, UnityEvent>();
     private Dictionary<Tuple<object, string>, UnityEvent> eventsDicEnd = new Dictionary<Tuple<object, string>, UnityEvent>();
@@ -92,6 +87,128 @@ public class PropertyAnimator : MonoBehaviour
     //TODO: 构造 开始，暂停，继续，停止  对应事件
 
     #region StartAnimatingProperty
+    /// <summary>
+    /// Begin to animate a property of an object. Assign callbacks for Start, Pause, Resume, End. 
+    /// </summary>
+    /// <param name="component">Object containing the prop</param>
+    /// <param name="strProp">Prop in string</param>
+    /// <param name="src">Start value</param>
+    /// <param name="targ">End value</param>
+    /// <param name="durTime">Duration</param>
+    /// <param name="callbacksStart">Callbacks for Start</param>
+    /// <param name="callbacksPause">Callbacks for Pause</param>
+    /// <param name="callbacksResume">Callbacks for Resume</param>
+    /// <param name="callbacksEnd">Callbacks for End</param>
+    /// <returns>Is successful?</returns>
+    public bool StartAnimatingPeopertyFloat(object component, string strProp, float src, float targ, float durTime,
+        List<UnityAction> callbacksStart,
+        List<UnityAction> callbacksPause,
+        List<UnityAction> callbacksResume,
+        List<UnityAction> callbacksEnd)
+    {
+        return StartAnimatingPeoperty<float>(updatersFloat, component, strProp, src, targ, durTime, PropertyUpdater<float>.GetValAtUpdateFloat, callbacksStart, callbacksPause, callbacksResume, callbacksEnd);
+    }
+    public bool StartAnimatingPropertyVector2(object component, string strProp, Vector2 src, Vector2 targ, float durTime,
+        List<UnityAction> callbacksStart,
+        List<UnityAction> callbacksPause,
+        List<UnityAction> callbacksResume,
+        List<UnityAction> callbacksEnd)
+    {
+        return StartAnimatingPeoperty<Vector2>(updatersVector2, component, strProp, src, targ, durTime, PropertyUpdater<float>.GetValAtUpdateVector2, callbacksStart, callbacksPause, callbacksResume, callbacksEnd);
+    }
+    public bool StartAnimatingPropertyVector3(object component, string strProp, Vector3 src, Vector3 targ, float durTime,
+        List<UnityAction> callbacksStart,
+        List<UnityAction> callbacksPause,
+        List<UnityAction> callbacksResume,
+        List<UnityAction> callbacksEnd)
+    {
+        return StartAnimatingPeoperty<Vector3>(updatersVector3, component, strProp, src, targ, durTime, PropertyUpdater<float>.GetValAtUpdateVector3, PropertyUpdater<float>.GetValAtUpdateFloat, callbacksStart, callbacksPause, callbacksResume, callbacksEnd);
+    }
+    public bool StartAnimatingPropertyInt(object component, string strProp, int src, int targ, float durTime,
+        List<UnityAction> callbacksStart,
+        List<UnityAction> callbacksPause,
+        List<UnityAction> callbacksResume,
+        List<UnityAction> callbacksEnd)
+    {
+        return StartAnimatingPeoperty<int>(updatersInt, component, strProp, src, targ, durTime, PropertyUpdater<int>.GetValAtUpdateInt, callbacksStart, callbacksPause, callbacksResume, callbacksEnd);
+    }
+    public bool StartAnimatingPropertyVector2Int(object component, string strProp, Vector2Int src, Vector2Int targ, float durTime,
+        List<UnityAction> callbacksStart,
+        List<UnityAction> callbacksPause,
+        List<UnityAction> callbacksResume,
+        List<UnityAction> callbacksEnd)
+    {
+        return StartAnimatingPeoperty<Vector2Int>(updatersVector2Int, component, strProp, src, targ, durTime, PropertyUpdater<Vector2Int>.GetValAtUpdateVector2Int, callbacksStart, callbacksPause, callbacksResume, callbacksEnd);
+    }
+    private bool StartAnimatingPropertyVector3Int(object component, string strProp, Vector3Int src, Vector3Int targ, float durTime,
+        PropertyUpdater<T>.GetValAtUpdate getValAtUpdate,
+        List<UnityAction> callbacksStart,
+        List<UnityAction> callbacksPause,
+        List<UnityAction> callbacksResume,
+        List<UnityAction> callbacksEnd)
+    {
+        return StartAnimatingPeoperty<Vector3Int>(updatersVector3Int, component, strProp, src, targ, durTime, PropertyUpdater<Vector3Int>.GetValAtUpdateVector3Int, callbacksStart, callbacksPause, callbacksResume, callbacksEnd);
+    }
+    private bool StartAnimatingPeoperty<T>(List<PropertyUpdater<T>> updaters, object component, string strProp, T src, T targ, float durTime, 
+        PropertyUpdater<T>.GetValAtUpdate getValAtUpdate,
+        List<UnityAction> callbacksStart,
+        List<UnityAction> callbacksPause,
+        List<UnityAction> callbacksResume,
+        List<UnityAction> callbacksEnd)
+    {
+        if (!StartAnimatingPeoperty<T>(updaters, component, strProp, src, targ, durTime, getValAtUpdate))
+            return false;
+
+        Tuple<object, string> key = new Tuple<object, string>(component, strProp);
+        UnityEvent uevent;
+
+        //if (callbacksStart!=null && callbacksStart.Count > 0)
+        //{
+        //    uevent = new UnityEvent();
+        //    foreach (var callback in callbacksStart)
+        //    {
+        //        uevent.AddListener(callback);
+        //    }
+        //    eventsDicStart.Add(key, uevent);
+        //}
+        if (callbacksPause != null && callbacksPause.Count > 0)
+        {
+            uevent = new UnityEvent();
+            foreach (var callback in callbacksPause)
+            {
+                uevent.AddListener(callback);
+            }
+            eventsDicPause.Add(key, uevent);
+        }
+        if (callbacksResume != null && callbacksResume.Count > 0)
+        {
+            uevent = new UnityEvent();
+            foreach (var callback in callbacksResume)
+            {
+                uevent.AddListener(callback);
+            }
+            eventsDicResume.Add(key, uevent);
+        }
+        if (callbacksEnd != null && callbacksEnd.Count > 0)
+        {
+            uevent = new UnityEvent();
+            foreach (var callback in callbacksEnd)
+            {
+                uevent.AddListener(callback);
+            }
+            eventsDicEnd.Add(key, uevent);
+        }
+
+        UnityEvent ueventStart = new UnityEvent();
+        foreach (var callback in callbacksStart)
+        {
+            ueventStart.AddListener(callback);
+        }
+        ueventStart.Invoke();
+
+        return true;
+    }
+
     /// <summary>
     /// Begin to animate a property of an object
     /// </summary>
@@ -179,6 +296,13 @@ public class PropertyAnimator : MonoBehaviour
         if (updater == null)
             return false;
         updater.Pause();
+
+        // Invoke pausing event
+        UnityEvent uevent = FindPropertyEvent<T>(eventsDicPause, component, strProp);
+        if (uevent != null)
+        {
+            uevent.Invoke();
+        }
         return true;
     }
     #endregion
@@ -221,6 +345,13 @@ public class PropertyAnimator : MonoBehaviour
         if (updater == null)
             return false;
         updater.Resume();
+
+        // Invoke resuming event
+        UnityEvent uevent = FindPropertyEvent<T>(eventsDicResume, component, strProp);
+        if (uevent != null)
+        {
+            uevent.Invoke();
+        }
         return true;
     }
     #endregion
@@ -277,6 +408,22 @@ public class PropertyAnimator : MonoBehaviour
                 break;
         }
         updaters.Remove(updater);
+
+        UnityEvent uevent;
+        Tuple<object, string> key = new Tuple<object, string>(component, strProp);
+        // Remove pausing event
+        eventsDicPause.Remove(key);
+        // Remove resuming event
+        eventsDicResume.Remove(key);
+        // Invoke endineventsDicPauseg event
+        uevent = FindPropertyEvent<T>(eventsDicEnd, component, strProp);
+        if (uevent != null)
+        {
+            uevent.Invoke();
+        }
+        // Remove resuming event
+        eventsDicEnd.Remove(key);
+
         return true;
     }
     #endregion
