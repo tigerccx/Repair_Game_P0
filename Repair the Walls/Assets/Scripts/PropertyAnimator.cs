@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using System;
 using System.Reflection;
 
@@ -37,6 +38,16 @@ public class PropertyAnimator : MonoBehaviour
     private List<PropertyUpdater<int>> updatersInt = new List<PropertyUpdater<int>>();
     private List<PropertyUpdater<Vector2Int>> updatersVector2Int = new List<PropertyUpdater<Vector2Int>>();
     private List<PropertyUpdater<Vector3Int>> updatersVector3Int = new List<PropertyUpdater<Vector3Int>>();
+
+    //private List<UnityEvent> eventsStart = new List<UnityEvent>();
+    //private List<UnityEvent> eventsPause = new List<UnityEvent>();
+    //private List<UnityEvent> eventsResume = new List<UnityEvent>();
+    //private List<UnityEvent> eventsEnd = new List<UnityEvent>();
+
+    private Dictionary<Tuple<object, string>, UnityEvent> eventsDicStart = new Dictionary<Tuple<object, string>, UnityEvent>();
+    private Dictionary<Tuple<object, string>, UnityEvent> eventsDicPause = new Dictionary<Tuple<object, string>, UnityEvent>();
+    private Dictionary<Tuple<object, string>, UnityEvent> eventsDicResume = new Dictionary<Tuple<object, string>, UnityEvent>();
+    private Dictionary<Tuple<object, string>, UnityEvent> eventsDicEnd = new Dictionary<Tuple<object, string>, UnityEvent>();
 
     private void Awake()
     {
@@ -89,37 +100,44 @@ public class PropertyAnimator : MonoBehaviour
     /// <param name="src">Start value</param>
     /// <param name="targ">End value</param>
     /// <param name="durTime">Duration</param>
-    public void StartAnimatingPropertyFloat(object component, string strProp, float src, float targ, float durTime)
+    /// <returns>Is successful?</returns>
+    public bool StartAnimatingPropertyFloat(object component, string strProp, float src, float targ, float durTime)
     {
-        StartAnimatingPeoperty<float>(updatersFloat, component, strProp, src, targ, durTime, PropertyUpdater<float>.GetValAtUpdateFloat);
+        return StartAnimatingPeoperty<float>(updatersFloat, component, strProp, src, targ, durTime, PropertyUpdater<float>.GetValAtUpdateFloat);
     }
-    public void StartAnimatingPropertyVector2(object component, string strProp, Vector2 src, Vector2 targ, float durTime)
+    public bool StartAnimatingPropertyVector2(object component, string strProp, Vector2 src, Vector2 targ, float durTime)
     {
-        StartAnimatingPeoperty<Vector2>(updatersVector2, component, strProp, src, targ, durTime, PropertyUpdater<float>.GetValAtUpdateVector2);
+        return StartAnimatingPeoperty<Vector2>(updatersVector2, component, strProp, src, targ, durTime, PropertyUpdater<float>.GetValAtUpdateVector2);
     }
-    public void StartAnimatingPropertyVector3(object component, string strProp, Vector3 src, Vector3 targ, float durTime)
+    public bool StartAnimatingPropertyVector3(object component, string strProp, Vector3 src, Vector3 targ, float durTime)
     {
-        StartAnimatingPeoperty<Vector3>(updatersVector3, component, strProp, src, targ, durTime, PropertyUpdater<float>.GetValAtUpdateVector3);
+        return StartAnimatingPeoperty<Vector3>(updatersVector3, component, strProp, src, targ, durTime, PropertyUpdater<float>.GetValAtUpdateVector3);
     }
-    public void StartAnimatingPropertyInt(object component, string strProp, int src, int targ, float durTime)
+    public bool StartAnimatingPropertyInt(object component, string strProp, int src, int targ, float durTime)
     {
-        StartAnimatingPeoperty<int>(updatersInt, component, strProp, src, targ, durTime, PropertyUpdater<int>.GetValAtUpdateInt);
+        return StartAnimatingPeoperty<int>(updatersInt, component, strProp, src, targ, durTime, PropertyUpdater<int>.GetValAtUpdateInt);
     }
-    public void StartAnimatingPropertyVector2Int(object component, string strProp, Vector2Int src, Vector2Int targ, float durTime)
+    public bool StartAnimatingPropertyVector2Int(object component, string strProp, Vector2Int src, Vector2Int targ, float durTime)
     {
-        StartAnimatingPeoperty<Vector2Int>(updatersVector2Int, component, strProp, src, targ, durTime, PropertyUpdater<Vector2Int>.GetValAtUpdateVector2Int);
+        return StartAnimatingPeoperty<Vector2Int>(updatersVector2Int, component, strProp, src, targ, durTime, PropertyUpdater<Vector2Int>.GetValAtUpdateVector2Int);
     }
-    public void StartAnimatingPropertyVector3Int(object component, string strProp, Vector3Int src, Vector3Int targ, float durTime)
+    public bool StartAnimatingPropertyVector3Int(object component, string strProp, Vector3Int src, Vector3Int targ, float durTime)
     {
-        StartAnimatingPeoperty<Vector3Int>(updatersVector3Int, component, strProp, src, targ, durTime, PropertyUpdater<Vector3Int>.GetValAtUpdateVector3Int);
+        return StartAnimatingPeoperty<Vector3Int>(updatersVector3Int, component, strProp, src, targ, durTime, PropertyUpdater<Vector3Int>.GetValAtUpdateVector3Int);
     }
 
-    private void StartAnimatingPeoperty<T>(List<PropertyUpdater<T>> updaters, object component, string strProp, T src, T targ, float durTime, PropertyUpdater<T>.GetValAtUpdate getValAtUpdate)
+    private bool StartAnimatingPeoperty<T>(List<PropertyUpdater<T>> updaters, object component, string strProp, T src, T targ, float durTime, PropertyUpdater<T>.GetValAtUpdate getValAtUpdate)
     {
+        if(FindAnimatingProperty<T>(updaters, component, strProp) != null)
+        {
+            Debug.LogWarning("Property is already in animating.");
+            return false;
+        }
         PropertyWrapper<T> wrapper = new PropertyWrapper<T>(component, strProp);
         PropertyUpdater<T> updater = new PropertyUpdater<T>(wrapper, src, targ, durTime, getValAtUpdate);
         updaters.Add(updater);
         updater.Start();
+        return true;
     }
     #endregion
 
@@ -129,7 +147,7 @@ public class PropertyAnimator : MonoBehaviour
     /// </summary>
     /// <param name="component">Object containing the prop</param>
     /// <param name="strProp">Prop in string</param>
-    /// <returns></returns>
+    /// <returns>Is successful?</returns>
     public bool PauseAnimatingPropertyFloat(object component, string strProp)
     {
         return PauseAnimatingProperty<float>(updatersFloat, component, strProp);
@@ -171,7 +189,7 @@ public class PropertyAnimator : MonoBehaviour
     /// </summary>
     /// <param name="component">Object containing the prop</param>
     /// <param name="strProp">Prop in string</param>
-    /// <returns></returns>
+    /// <returns>Is successful?</returns>
     public bool ResumeAnimatingPropertyFloat(object component, string strProp)
     {
         return ResumeAnimatingProperty<float>(updatersFloat, component, strProp);
@@ -214,7 +232,7 @@ public class PropertyAnimator : MonoBehaviour
     /// <param name="component">Object containing the prop</param>
     /// <param name="strProp">Prop in string</param>
     /// <param name="endState">Set the state of property value when animating ended</param>
-    /// <returns></returns>
+    /// <returns>Is successful?</returns>
     public bool EndAnimatingPropertyFloat(object component, string strProp, EndPropertyState endState)
     {
         return EndAnimatingProperty<float>(updatersFloat, component, strProp, endState);
@@ -269,6 +287,14 @@ public class PropertyAnimator : MonoBehaviour
         {
             return updater.prop.component == component && updater.prop.strProp == strProp;
         });
+    }
+    private UnityEvent FindPropertyEvent<T>(Dictionary<Tuple<object, string>, UnityEvent> events, object component, string strProp)
+    {
+        Tuple<object, string> key = new Tuple<object, string>(component, strProp);
+        UnityEvent uevent;
+        if (!events.TryGetValue(key, out uevent))
+            return null;
+        return uevent;
     }
 }
 
